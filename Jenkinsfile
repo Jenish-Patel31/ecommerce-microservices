@@ -1,63 +1,59 @@
-pipeline{
+pipeline {
     agent any
-    
-    environment{
-        DOCKER_USERNAME= credentials('dockerhub')
-        DOCKER_PASSWORD= credentials('dockerhub')
+
+    stages {
+        stage("Build User Service") {
+            steps {
+                dir('user-service') {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            echo "Building User Service"
+                            docker build -t $DOCKER_USERNAME/user-service:latest .
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push $DOCKER_USERNAME/user-service:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage("Build Product Service") {
+            steps {
+                dir('product-service') {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            echo "Building Product Service"
+                            docker build -t $DOCKER_USERNAME/product-service:latest .
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push $DOCKER_USERNAME/product-service:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage("Build Order Service") {
+            steps {
+                dir('order-service') {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            echo "Building Order Service"
+                            docker build -t $DOCKER_USERNAME/order-service:latest .
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push $DOCKER_USERNAME/order-service:latest
+                        '''
+                    }
+                }
+            }
+        }
     }
 
-    stages{
-        stage("Build User service"){
-            steps{
-                dir('user-service'){
-                    sh ''' 
-                        echo "Building User Service "
-                        docker build -t $DOCKER_USERNAME/user-service:latest .
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        docker push $DOCKER_USERNAME/user-service:latest
-                    '''
-                }
-            }
-        }
-
-        stage("Build Product Service"){
-            steps{
-                dir('product-service'){
-                    sh ''' 
-                    echo "Building Product Service"
-                    docker build -t $DOCKER_USERNAME/product-service:latest .
-                    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                    docker push $DOCKER_USERNAME/product-service:latest
-
-                    '''
-                }
-            }
-        }
-
-        stage("Build Order Service"){
-            steps{
-                dir('order-service'){
-                    sh '''
-                        echo "Building Order Service"
-                        docker build -t $DOCKER_USERNAME/order-service:latest .
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        docker push $DOCKER_USERNAME/order-service:latest
-                    '''
-                }
-            }
-        }
-    }
-
-    post{
-
-        success{
+    post {
+        success {
             echo "All Services built and pushed Successfully!"
         }
-
-        failure{
+        failure {
             echo "Build failed. Check the logs."
         }
     }
-
-
 }
