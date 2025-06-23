@@ -46,6 +46,17 @@ pipeline {
                 }
             }
         }
+
+        stage("Deploy with Docker Compose"){
+            steps {
+                sh '''
+                    echo "Pulling latest images from DockerHub..."
+                    docker compose down
+                    docker compose pull
+                    docker compose up -d
+                '''
+            }
+        }
     }
 
     post {
